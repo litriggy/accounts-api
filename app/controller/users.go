@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	db "accounts/api/platform/database/models"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -147,6 +145,18 @@ func GetBalance(c *fiber.Ctx) error {
 	})
 }
 
+type RespMyServices struct {
+	ServiceID    int32  `json:"serviceId"`
+	Name         string `json:"name"`
+	Symbol       string `json:"symbol"`
+	Decimals     int32  `json:"decimals"`
+	Image        string `json:"img"`
+	IsNative     bool   `json:"isNative"`
+	ContractAddr string `json:"contractAddr"`
+	NetType      string `json:"netType"`
+	Balance      int64  `json:"balance"`
+}
+
 // GetUserServices method for adding wallet to the corresponding user.
 //
 //	@Description	등록한 서비스 조회 API 입니다.
@@ -158,11 +168,30 @@ func GetBalance(c *fiber.Ctx) error {
 //	@Success		200		{object}	[]string{}
 //	@Router			/v1/user/services [get]
 func GetUserServices(c *fiber.Ctx) error {
-	var serviceList *[]db.GetUserServicesRow
+	//var serviceList []db.GetUserServicesRow
 	var err error
 	userID, _ := strconv.ParseInt(fmt.Sprintf("%v", c.Locals("userID")), 10, 64)
-	serviceList, err = service.GetUserServices(int32(userID))
+	serviceList, err := service.GetUserServices(int32(userID))
 
+	var respdata []RespMyServices
+
+	for _, row := range *serviceList {
+		isNative := false
+		if row.IsNative.Int32 == 1 {
+			isNative = true
+		}
+		respdata = append(respdata, RespMyServices{
+			ServiceID:    row.ServiceID,
+			Name:         row.Name.String,
+			Symbol:       row.Symbol.String,
+			Decimals:     row.Decimals.Int32,
+			Image:        row.Image.String,
+			IsNative:     isNative,
+			ContractAddr: row.ContractAddr.String,
+			NetType:      row.NetType.String,
+			Balance:      row.Amount.Int64,
+		})
+	}
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"status": "error",
@@ -172,7 +201,7 @@ func GetUserServices(c *fiber.Ctx) error {
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status": "fetched",
-		"data":   serviceList,
+		"data":   respdata,
 	})
 
 }

@@ -33,6 +33,7 @@ func CheckSession(c *fiber.Ctx) error {
 	}
 	//user := c.Locals("user").(*jwt.Token)
 	c.Locals("newSessionKey", newSessionKey)
+	c.Set("Authorization", fmt.Sprintf("%v", c.Locals("newSessionKey")))
 	c.Locals("userID", userID)
 	return c.Next()
 }

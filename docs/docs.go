@@ -401,7 +401,8 @@ const docTemplate = `{
                     "example": "ex) 000000"
                 },
                 "walletType": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "ex) eth, sol, bit, apt"
                 }
             }
         },
@@ -515,7 +516,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:3000",
+	Host:             "43.201.113.207:3000",
 	BasePath:         "/api",
 	Schemes:          []string{"http"},
 	Title:            "Accounts API",

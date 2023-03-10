@@ -10,6 +10,7 @@ definitions:
         example: ex) 000000
         type: string
       walletType:
+        example: ex) eth, sol, bit, apt
         type: string
     type: object
   model.AddSecondPass:
@@ -83,7 +84,7 @@ definitions:
         description: example:"송금 대상 유저 Id 값"`      // example:"수량"`
         type: integer
     type: object
-host: localhost:3000
+host: 43.201.113.207:3000
 info:
   contact: {}
   description: 계정계 API 서버 입니다.
