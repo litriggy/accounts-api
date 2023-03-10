@@ -1,0 +1,9 @@
+version: "2"
+sql:
+  - schema: "platform/database/schema/2023-02-22-ACCOUNTS.sql"
+    queries: "platform/database/query/oauth.sql"
+    engine: "mysql"
+    gen:
+      go:
+        package: "db"
+        out: "platform/database/models"

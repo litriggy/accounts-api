@@ -1,0 +1,9 @@
+{
+  "editor.fontFamily": "JetBrains Mono",
+  "editor.fontLigatures": true,
+  "editor.fontWeight": 300,
+  "editor.fontSize": 13,
+  "gopls": {
+    "ui.semanticTokens": true
+  }
+}

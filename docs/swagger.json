@@ -1,0 +1,510 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "계정계 API 서버 입니다.",
+        "title": "Accounts API",
+        "contact": {},
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:3000",
+    "basePath": "/api",
+    "paths": {
+        "/v1/auth/check": {
+            "get": {
+                "description": "세션키를 확인하여 유저 정보를 반환 및 세션키를 재생성합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "세션키 확인",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "액세스 토큰",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/auth/signin/{type}/{version}": {
+            "post": {
+                "description": "소셜 로그인으로 로그인 혹은 회원가입을 진행합니다. 계정 생성이면 201, 로그인이면 200을 리턴합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "로그인/회원가입",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "소셜 로그인 종류 (ex: google, apple)",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "소셜 로그인 버전 (ex: 1, 2, ...)",
+                        "name": "version",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "소셜 로그인 측에서 제공한 access token",
+                        "name": "accessToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SignIn"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/info/services": {
+            "get": {
+                "description": "서비스 리스트 API 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "서비스 리스트 API",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tx/transfer": {
+            "post": {
+                "description": "오프체인 송금 API 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "오프체인 송금 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "액세스 토큰",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "송금 시도 시 필요한 body 값",
+                        "name": "wallet",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Transfer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/balance": {
+            "get": {
+                "description": "잔고 조회 API 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "잔고 조회 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "액세스 토큰",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "조회 대상 id 쉼표로 구분합니다. ex) 1, 2, 3",
+                        "name": "items[]",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/secondpass": {
+            "post": {
+                "description": "2차 비밀번호 등록 API 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "2차 비밀번호 등록 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "액세스 토큰",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "2차 비밀번호",
+                        "name": "secondPass",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.AddSecondPass"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/service/{serviceId}": {
+            "post": {
+                "description": "서비스 추가 API 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "서비스 추가 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "액세스 토큰",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "추가 대상 서비스 id",
+                        "name": "serviceId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/services": {
+            "get": {
+                "description": "등록한 서비스 조회 API 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "등록한 서비스 조회 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "액세스 토큰",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/wallet/{type}": {
+            "post": {
+                "description": "지갑 등록 API 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "지갑 등록 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "액세스 토큰",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "지갑 등록 타입 soft, hard",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "soft wallet 등록 시 필요한 body 값",
+                        "name": "softWallet",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/model.AddSoftWallet"
+                        }
+                    },
+                    {
+                        "description": "hard wallet 등록 시 필요한 body 값",
+                        "name": "hardWallet",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/model.AddHardWallet"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.AddHardWallet": {
+            "description": "개인 키로 지갑 등록 request Body struct",
+            "type": "object",
+            "properties": {
+                "privateKey": {
+                    "type": "string",
+                    "example": "ex) 027737b5...."
+                },
+                "secPw": {
+                    "type": "string",
+                    "example": "ex) 000000"
+                },
+                "walletType": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.AddSecondPass": {
+            "type": "object",
+            "properties": {
+                "secPw": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.AddSoftWallet": {
+            "description": "서명으로 지갑 등록 request Body struct",
+            "type": "object",
+            "properties": {
+                "salt": {
+                    "type": "string",
+                    "example": "ex) 165...."
+                },
+                "signature": {
+                    "type": "string",
+                    "example": "ex) 0x00..."
+                },
+                "walletAddr": {
+                    "type": "string",
+                    "example": "ex) 0x00..."
+                },
+                "walletType": {
+                    "type": "string",
+                    "example": "ex) kaikas, metamask"
+                }
+            }
+        },
+        "model.OffTransactionDetail": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "to": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.OnTransactionDetail": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "example:\"수량 wei 단위로 작성\"`",
+                    "type": "integer"
+                },
+                "from": {
+                    "description": "example:\"보낼 db에 기록된 지갑 주소\"`",
+                    "type": "string"
+                },
+                "to": {
+                    "description": "example:\"대상 지갑 주소\"`",
+                    "type": "string"
+                },
+                "txhash": {
+                    "description": "example:\"pk 보관 중이지 않은 지갑 일 경우 필수 아님\" require:\"false\"`",
+                    "type": "string"
+                }
+            }
+        },
+        "model.SignIn": {
+            "description": "로그인/회원가입 request Body struct",
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Transfer": {
+            "description": "송금 request Body struct",
+            "type": "object",
+            "properties": {
+                "offChainEvent": {
+                    "description": "example:\"장부거래\"`",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.OffTransactionDetail"
+                        }
+                    ]
+                },
+                "onChainEvents": {
+                    "description": "example:\"블록체인 거래\"`",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.OnTransactionDetail"
+                    }
+                },
+                "secPw": {
+                    "description": "example:\"2차 비밀번호\"`",
+                    "type": "string"
+                },
+                "serviceId": {
+                    "description": "example:\"서비스 Id 값\"`",
+                    "type": "integer"
+                },
+                "to": {
+                    "description": "example:\"송금 대상 유저 Id 값\"`      // example:\"수량\"`",
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

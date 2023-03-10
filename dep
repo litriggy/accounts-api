@@ -1,0 +1,31 @@
+FROM golang:alpine
+
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+ENV HOST=0.0.0.0
+ENV PORT=3000
+ENV DEBUG=false\
+    READ_TIMEOUT=1000\
+    SECRET_KEY=sanghun\
+    EXPIRY=100000\
+    GOOGLE_CLIENT=997490977948-j1krge4vtu5rn7llojk5s3m75eg3c3ol.apps.googleusercontent.com\
+    DB_HOST=w3-dev-00.cluster-cprvadlbhcmx.ap-northeast-2.rds.amazonaws.com\
+    DB_PORT=3306\
+    DB_USER=admin\
+    DB_PASSWORD=Tosemqkrtm0622!!!!\
+    DB_DATABASE=accounts
+
+WORKDIR /build
+
+COPY ./ /build/
+
+RUN go mod download && go mod verify 
+
+RUN go build
+
+EXPOSE 11211
+
+CMD ["./api"]
