@@ -20,7 +20,7 @@ import (
 //	@Accept			json
 //	@Produce		json
 //	@Param			type		path		string			true	"소셜 로그인 종류 (ex: google, apple)"
-//	@Param			version		path		string			true	"소셜 로그인 버전 (ex: 1, 2, ...)"
+//	@Param			version		path		string			true	"소셜 로그인 버전 웹사이트: 1, 확장앱: 2"
 //	@Param			accessToken	body		model.SignIn	true	"소셜 로그인 측에서 제공한 access token"
 //	@Success		200			{object}	[]string{}
 //	@Router			/v1/auth/signin/{type}/{version} [post]
@@ -39,7 +39,7 @@ func SignIn(c *fiber.Ctx) error {
 	//var userdata db.User
 	version, _ := strconv.Atoi(params["version"])
 	var userID string
-	var authInfo *model.AuthInfo
+	var authInfo model.AuthInfo
 	var content *fiber.Map
 	switch params["type"] {
 	case "google":
@@ -52,7 +52,7 @@ func SignIn(c *fiber.Ctx) error {
 		if err != nil {
 			if sql.ErrNoRows == err {
 				//create Account
-				newUserID, err := service.CreateUser(authInfo.ID, params["type"], int32(version), "", authInfo.Email, "USER")
+				newUserID, err := service.CreateUser(authInfo.ID, params["type"], int32(version), authInfo.Nickname, authInfo.Email, "USER", authInfo.Picture)
 				if err != nil {
 					return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 						"status": "error",
@@ -115,9 +115,7 @@ func SignUp(oauthId string, oauthType string, name string, email string) {
 //	@Router			/v1/auth/check [get]
 func CheckSession(c *fiber.Ctx) error {
 	userID := c.Locals("userID")
-	newSessionKey := c.Locals("newSessionKey")
 	return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
-		"userID":        userID,
-		"newSessionKey": newSessionKey,
+		"userID": userID,
 	})
 }

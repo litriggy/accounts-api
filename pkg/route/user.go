@@ -8,6 +8,8 @@ import (
 )
 
 func UserRoutes(r fiber.Router) {
+
+	r.Get("/myinfo", middleware.CheckSession, controller.MyInfo)
 	r.Get("/wallet", middleware.CheckSession)
 	r.Post("/wallet/:type", middleware.CheckSession, controller.AddWallet)
 	r.Delete("/wallet", middleware.CheckSession)
@@ -15,4 +17,5 @@ func UserRoutes(r fiber.Router) {
 	r.Get("/services", middleware.CheckSession, controller.GetUserServices)
 	r.Post("/service/:serviceId", middleware.CheckSession, controller.AddService)
 	r.Post("/secondpass", middleware.CheckSession, controller.CreateSecondPassword)
+	r.Get("/secondpass", middleware.CheckSession, controller.CheckSecondPass)
 }

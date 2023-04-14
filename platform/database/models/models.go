@@ -48,6 +48,7 @@ type Service struct {
 	IsNative     int32
 	ContractAddr sql.NullString
 	NetType      sql.NullString
+	WalletType   sql.NullString
 }
 
 type Transaction struct {
@@ -66,17 +67,19 @@ type TransactionDetail struct {
 	Amount        int64
 	IsOnchain     int32
 	Txhash        sql.NullString
+	Status        int32
 }
 
 type User struct {
 	ID        int32
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Nickname  string
+	Nickname  sql.NullString
 	Email     string
 	Type      string
 	Verified  int32
 	IsLocked  int32
+	Picture   sql.NullString
 }
 
 type UserBalance struct {

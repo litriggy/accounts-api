@@ -10,6 +10,35 @@ import (
 	"database/sql"
 )
 
+const checkPassExists = `-- name: CheckPassExists :one
+SELECT COUNT(*) FROM user_pw
+WHERE user_id = ?
+`
+
+func (q *Queries) CheckPassExists(ctx context.Context, userID int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, checkPassExists, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const checkUserPass = `-- name: CheckUserPass :one
+SELECT COUNT(*) FROM user_pw
+WHERE user_id = ? AND sec_pw = ?
+`
+
+type CheckUserPassParams struct {
+	UserID int32
+	SecPw  sql.NullString
+}
+
+func (q *Queries) CheckUserPass(ctx context.Context, arg CheckUserPassParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, checkUserPass, arg.UserID, arg.SecPw)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const checkUserWallet = `-- name: CheckUserWallet :one
 SELECT id, created_at, updated_at, user_id, wallet_addr, sec_pk, is_integrated, wallet_type, net_type FROM user_wallets
 WHERE user_id = ? AND wallet_addr = ?
@@ -164,27 +193,33 @@ func (q *Queries) CreateTxDetails(ctx context.Context, arg CreateTxDetailsParams
 
 const createUser = `-- name: CreateUser :execresult
 INSERT INTO users (
-    ` + "`" + `nickname` + "`" + `, ` + "`" + `email` + "`" + `, ` + "`" + `type` + "`" + `
+    ` + "`" + `nickname` + "`" + `, ` + "`" + `email` + "`" + `, ` + "`" + `type` + "`" + `, ` + "`" + `picture` + "`" + `
 ) VALUES (
-    ?, ?, ?
+    ?, ?, ?, ?
 )
 `
 
 type CreateUserParams struct {
-	Nickname string
+	Nickname sql.NullString
 	Email    string
 	Type     string
+	Picture  sql.NullString
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createUser, arg.Nickname, arg.Email, arg.Type)
+	return q.db.ExecContext(ctx, createUser,
+		arg.Nickname,
+		arg.Email,
+		arg.Type,
+		arg.Picture,
+	)
 }
 
 const createUserWallet = `-- name: CreateUserWallet :exec
 INSERT INTO user_wallets (
-    ` + "`" + `user_id` + "`" + `, ` + "`" + `wallet_addr` + "`" + `, ` + "`" + `sec_pk` + "`" + `, ` + "`" + `is_integrated` + "`" + `
+    ` + "`" + `user_id` + "`" + `, ` + "`" + `wallet_addr` + "`" + `, ` + "`" + `sec_pk` + "`" + `, ` + "`" + `is_integrated` + "`" + `, ` + "`" + `wallet_type` + "`" + `
 ) VALUES (
-    ?, ?, ?, ?
+    ?, ?, ?, ?, ?
 )
 `
 
@@ -193,6 +228,7 @@ type CreateUserWalletParams struct {
 	WalletAddr   string
 	SecPk        sql.NullString
 	IsIntegrated int32
+	WalletType   sql.NullString
 }
 
 func (q *Queries) CreateUserWallet(ctx context.Context, arg CreateUserWalletParams) error {
@@ -201,6 +237,7 @@ func (q *Queries) CreateUserWallet(ctx context.Context, arg CreateUserWalletPara
 		arg.WalletAddr,
 		arg.SecPk,
 		arg.IsIntegrated,
+		arg.WalletType,
 	)
 	return err
 }
@@ -247,7 +284,7 @@ WHERE LOWER(` + "`" + `email` + "`" + `) = LOWER(?) AND ` + "`" + `is_locked` + 
 
 type FindUserByEmailRow struct {
 	ID       int32
-	Nickname string
+	Nickname sql.NullString
 	Email    string
 }
 
@@ -281,7 +318,7 @@ WHERE LOWER(` + "`" + `nickname` + "`" + `) = LOWER(?) AND ` + "`" + `is_locked`
 
 type FindUserByNicknameRow struct {
 	ID       int32
-	Nickname string
+	Nickname sql.NullString
 	Email    string
 }
 
@@ -308,8 +345,30 @@ func (q *Queries) FindUserByNickname(ctx context.Context, lower string) ([]FindU
 	return items, nil
 }
 
+const findWallet = `-- name: FindWallet :one
+SELECT id, created_at, updated_at, user_id, wallet_addr, sec_pk, is_integrated, wallet_type, net_type FROM user_wallets
+WHERE wallet_addr = ?
+`
+
+func (q *Queries) FindWallet(ctx context.Context, walletAddr string) (UserWallet, error) {
+	row := q.db.QueryRowContext(ctx, findWallet, walletAddr)
+	var i UserWallet
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserID,
+		&i.WalletAddr,
+		&i.SecPk,
+		&i.IsIntegrated,
+		&i.WalletType,
+		&i.NetType,
+	)
+	return i, err
+}
+
 const getAllServices = `-- name: GetAllServices :many
-SELECT id, name, symbol, decimals, image, is_native, contract_addr, net_type FROM services
+SELECT id, name, symbol, decimals, image, is_native, contract_addr, net_type, wallet_type FROM services
 `
 
 func (q *Queries) GetAllServices(ctx context.Context) ([]Service, error) {
@@ -330,6 +389,7 @@ func (q *Queries) GetAllServices(ctx context.Context) ([]Service, error) {
 			&i.IsNative,
 			&i.ContractAddr,
 			&i.NetType,
+			&i.WalletType,
 		); err != nil {
 			return nil, err
 		}
@@ -484,8 +544,129 @@ func (q *Queries) GetServiceData(ctx context.Context, id int32) (GetServiceDataR
 	return i, err
 }
 
+const getTransactionDetails = `-- name: GetTransactionDetails :many
+SELECT d.from, d.to, d.amount, d.is_onchain, d.txhash, d.status FROM transaction_detail AS d
+LEFT JOIN user_wallets
+ON user_wallets.wallet_addr = d.from 
+WHERE ` + "`" + `transaction_id` + "`" + ` = ?
+`
+
+type GetTransactionDetailsRow struct {
+	From      string
+	To        string
+	Amount    int64
+	IsOnchain int32
+	Txhash    sql.NullString
+	Status    int32
+}
+
+func (q *Queries) GetTransactionDetails(ctx context.Context, transactionID int32) ([]GetTransactionDetailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTransactionDetails, transactionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTransactionDetailsRow
+	for rows.Next() {
+		var i GetTransactionDetailsRow
+		if err := rows.Scan(
+			&i.From,
+			&i.To,
+			&i.Amount,
+			&i.IsOnchain,
+			&i.Txhash,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTransactionsAAA = `-- name: GetTransactionsAAA :many
+SELECT t.id, t.from_id, t.to_id, t.memo, t.total_amount, s.name, s.symbol, s.decimals, s.image, s.is_native, s.net_type, s.wallet_type FROM transactions AS t
+LEFT JOIN services AS s
+ON s.id = t.service_id
+WHERE ` + "`" + `from_id` + "`" + ` = ? OR ` + "`" + `to_id` + "`" + ` IN (?, ?, ?)
+LIMIT ? OFFSET ?
+`
+
+type GetTransactionsAAAParams struct {
+	FromID int32
+	ToID   int32
+	ToID_2 int32
+	ToID_3 int32
+	Limit  int32
+	Offset int32
+}
+
+type GetTransactionsAAARow struct {
+	ID          int32
+	FromID      int32
+	ToID        int32
+	Memo        sql.NullString
+	TotalAmount int64
+	Name        sql.NullString
+	Symbol      sql.NullString
+	Decimals    sql.NullInt32
+	Image       sql.NullString
+	IsNative    sql.NullInt32
+	NetType     sql.NullString
+	WalletType  sql.NullString
+}
+
+func (q *Queries) GetTransactionsAAA(ctx context.Context, arg GetTransactionsAAAParams) ([]GetTransactionsAAARow, error) {
+	rows, err := q.db.QueryContext(ctx, getTransactionsAAA,
+		arg.FromID,
+		arg.ToID,
+		arg.ToID_2,
+		arg.ToID_3,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTransactionsAAARow
+	for rows.Next() {
+		var i GetTransactionsAAARow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FromID,
+			&i.ToID,
+			&i.Memo,
+			&i.TotalAmount,
+			&i.Name,
+			&i.Symbol,
+			&i.Decimals,
+			&i.Image,
+			&i.IsNative,
+			&i.NetType,
+			&i.WalletType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUser = `-- name: GetUser :one
-SELECT id, created_at, updated_at, nickname, email, type, verified, is_locked FROM users
+SELECT id, created_at, updated_at, nickname, email, type, verified, is_locked, picture FROM users
 WHERE id = ?
 `
 
@@ -501,12 +682,13 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 		&i.Type,
 		&i.Verified,
 		&i.IsLocked,
+		&i.Picture,
 	)
 	return i, err
 }
 
 const getUserByOauth = `-- name: GetUserByOauth :one
-SELECT id, created_at, updated_at, nickname, email, type, verified, is_locked FROM users
+SELECT id, created_at, updated_at, nickname, email, type, verified, is_locked, picture FROM users
 WHERE id in (
     SELECT user_id FROM oauth
     WHERE oauth_type = ? AND oauth_id = ?
@@ -530,17 +712,20 @@ func (q *Queries) GetUserByOauth(ctx context.Context, arg GetUserByOauthParams) 
 		&i.Type,
 		&i.Verified,
 		&i.IsLocked,
+		&i.Picture,
 	)
 	return i, err
 }
 
 const getUserServices = `-- name: GetUserServices :many
-SELECT us.service_id AS service_id, ub.amount AS amount, s.name, s.symbol, s.decimals, s.image, s.is_native, s.contract_addr, s.net_type 
+SELECT us.service_id AS service_id, ub.amount AS amount, s.name, s.symbol, s.decimals, s.image, s.is_native, s.contract_addr, s.net_type, user_wallets.wallet_addr, user_wallets.is_integrated
 FROM user_service AS us
 LEFT JOIN services AS s
 ON us.service_id = s.id
 LEFT JOIN user_balances AS ub
 ON ub.service_id = s.id AND ub.user_id = us.user_id
+LEFT JOIN user_wallets
+ON us.user_id = user_wallets.user_id
 WHERE us.user_id = ?
 `
 
@@ -554,6 +739,8 @@ type GetUserServicesRow struct {
 	IsNative     sql.NullInt32
 	ContractAddr sql.NullString
 	NetType      sql.NullString
+	WalletAddr   sql.NullString
+	IsIntegrated sql.NullInt32
 }
 
 func (q *Queries) GetUserServices(ctx context.Context, userID int32) ([]GetUserServicesRow, error) {
@@ -575,6 +762,8 @@ func (q *Queries) GetUserServices(ctx context.Context, userID int32) ([]GetUserS
 			&i.IsNative,
 			&i.ContractAddr,
 			&i.NetType,
+			&i.WalletAddr,
+			&i.IsIntegrated,
 		); err != nil {
 			return nil, err
 		}
@@ -649,7 +838,7 @@ WHERE id = ?
 `
 
 type UpdateNicknameParams struct {
-	Nickname string
+	Nickname sql.NullString
 	ID       int32
 }
 

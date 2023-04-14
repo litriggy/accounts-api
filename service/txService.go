@@ -102,6 +102,22 @@ func TransferBalance(fromID int32, toID int32, serviceID int32, onChainLog []mod
 			return err
 		}
 		for _, log := range onChainLog {
+			if len(log.Txhash) > 0 {
+
+				q.CreateTxDetails(ctx, db.CreateTxDetailsParams{
+					TransactionID: int32(txID),
+					From:          log.From,
+					To:            log.To,
+					Amount:        log.Amount,
+					IsOnchain:     int32(1),
+					Txhash: sql.NullString{
+						String: log.Txhash,
+						Valid:  true,
+					},
+				})
+				totalAmount += log.Amount
+				continue
+			}
 			encPrivateKey, err := getPK(log.From)
 			if err != nil {
 				return err
@@ -138,4 +154,30 @@ func TransferBalance(fromID int32, toID int32, serviceID int32, onChainLog []mod
 		return err
 	}
 	return tx.Commit()
+}
+
+func TransactionHistory(userID string, lim string, off string) ([]db.GetTransactionsRow, error) {
+	ctx := context.Background()
+	query, err := config.ConnectDB()
+	if err != nil {
+		return nil, err
+	}
+	result, err := query.GetTransactions(ctx, userID, lim, off)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func TransactionDetail(tID int32) ([]db.GetTransactionDetailsRow, error) {
+	ctx := context.Background()
+	query, err := config.ConnectDB()
+	if err != nil {
+		return nil, err
+	}
+	result, err := query.GetTransactionDetails(ctx, tID)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

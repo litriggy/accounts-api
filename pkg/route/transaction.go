@@ -10,4 +10,5 @@ import (
 func TransactionRoutes(r fiber.Router) {
 	r.Post("/transfer", middleware.CheckSession, controller.TransferBalance)
 	r.Get("/history", middleware.CheckSession, controller.TransferHistory)
+	r.Get("/history/detail/:id", controller.TransactionHistoryDetail)
 }

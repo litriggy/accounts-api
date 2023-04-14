@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
 	"strconv"
 
 	"accounts/api/pkg/config"
@@ -25,7 +25,7 @@ func FindUser(oauthID string, oauthType string) (db.User, error) {
 	return result, nil
 }
 
-func CreateUser(oauthID string, oauthType string, version int32, nickname string, email string, userType string) (string, error) {
+func CreateUser(oauthID string, oauthType string, version int32, nickname string, email string, userType string, picture string) (string, error) {
 	ctx := context.Background()
 	query, database, err := config.DBConn()
 	if err != nil {
@@ -39,12 +39,21 @@ func CreateUser(oauthID string, oauthType string, version int32, nickname string
 	}
 	defer tx.Rollback()
 	q := query.WithTx(tx)
-	user, err := q.CreateUser(ctx, db.CreateUserParams{Nickname: nickname, Email: email, Type: userType})
+	user, err := q.CreateUser(ctx, db.CreateUserParams{
+		Nickname: sql.NullString{
+			String: nickname,
+			Valid:  true,
+		},
+		Email: email,
+		Type:  userType,
+		Picture: sql.NullString{
+			String: picture,
+			Valid:  true,
+		},
+	})
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(user.LastInsertId())
-	fmt.Println(user.RowsAffected())
 	userid, err := user.LastInsertId()
 	if err != nil {
 		return "", err

@@ -6,7 +6,21 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 )
+
+func GetUser(userID int32) (*db.User, error) {
+	query, err := config.ConnectDB()
+	if err != nil {
+		return nil, err
+	}
+
+	userInfo, err := query.GetUser(context.Background(), userID)
+	if err != nil {
+		return nil, err
+	}
+	return &userInfo, nil
+}
 
 func CreateSoftWallet(walletAddr string, userId int32) error {
 	query, err := config.ConnectDB()
@@ -37,6 +51,7 @@ func CreateHardWallet(walletAddr string, secPk string, userId int32) error {
 		IsIntegrated: 1,
 		WalletAddr:   walletAddr,
 		SecPk:        sql.NullString{String: secPk, Valid: true},
+		WalletType:   sql.NullString{String: "eth", Valid: true},
 	})
 	if err != nil {
 		return err
@@ -86,4 +101,65 @@ func CreatedSecondPassword(userID int32, secPw string) error {
 		return err
 	}
 	return nil
+}
+
+func CheckPassword(userID int32, pass string) (bool, error) {
+	query, err := config.ConnectDB()
+	if err != nil {
+		return false, err
+	}
+	count, err := query.CheckUserPass(
+		context.Background(),
+		db.CheckUserPassParams{
+			UserID: userID,
+			SecPw: sql.NullString{
+				Valid:  true,
+				String: pass,
+			},
+		})
+	if err != nil {
+		return false, err
+	}
+	if count > 0 {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
+func CheckPasswordExists(userID int32) (bool, error) {
+	query, err := config.ConnectDB()
+	if err != nil {
+		return false, err
+	}
+	count, err := query.CheckPassExists(context.Background(), userID)
+
+	if err != nil {
+		return false, nil
+
+	}
+	if count > 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func FindWallet(walletAddr string) (bool, error) {
+	query, err := config.ConnectDB()
+	if err != nil {
+		return false, err
+	}
+	result, err := query.FindWallet(context.Background(), walletAddr)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return true, nil
+		}
+		fmt.Println(err.Error())
+		return false, err
+	}
+	if result != (db.UserWallet{}) {
+		return false, errors.New("exists")
+	} else {
+		return true, nil
+	}
 }

@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"math/big"
 	"net/http"
 
@@ -107,16 +106,4 @@ func transferNativeBalance(pk string, to string, amount int64, net string) (stri
 
 	fmt.Printf("Transaction sent: %s\n %s", signedTx.Hash().Hex(), net)
 	return signedTx.Hash().Hex(), nil
-}
-
-func CurrentBlock(net string) {
-	client, err := GetClient(net)
-	if err != nil {
-		log.Println(err)
-	}
-	block, err := client.BlockByNumber(context.Background(), nil)
-	if err != nil {
-		log.Println(err)
-	}
-	fmt.Println(block.Number())
 }

@@ -26,9 +26,9 @@ WHERE oauth_id = ? AND oauth_type = ?;
 
 -- name: CreateUser :execresult
 INSERT INTO users (
-    `nickname`, `email`, `type`
+    `nickname`, `email`, `type`, `picture`
 ) VALUES (
-    ?, ?, ?
+    ?, ?, ?, ?
 );
 
 -- name: GetUser :one
@@ -103,6 +103,12 @@ UPDATE transactions
 SET total_amount = ?
 WHERE `id` = ?;
 
+-- name: GetTransactionDetails :many
+SELECT d.from, d.to, d.amount, d.is_onchain, d.txhash, d.status FROM transaction_detail AS d
+LEFT JOIN user_wallets
+ON user_wallets.wallet_addr = d.from 
+WHERE `transaction_id` = ?;
+
 -- name: GetServiceData :one
 SELECT is_native, contract_addr, net_type FROM services
 WHERE id = ?;
@@ -111,12 +117,14 @@ WHERE id = ?;
 SELECT * FROM services;
 
 -- name: GetUserServices :many
-SELECT us.service_id AS service_id, ub.amount AS amount, s.name, s.symbol, s.decimals, s.image, s.is_native, s.contract_addr, s.net_type 
+SELECT us.service_id AS service_id, ub.amount AS amount, s.name, s.symbol, s.decimals, s.image, s.is_native, s.contract_addr, s.net_type, user_wallets.wallet_addr, user_wallets.is_integrated
 FROM user_service AS us
 LEFT JOIN services AS s
 ON us.service_id = s.id
 LEFT JOIN user_balances AS ub
 ON ub.service_id = s.id AND ub.user_id = us.user_id
+LEFT JOIN user_wallets
+ON us.user_id = user_wallets.user_id
 WHERE us.user_id = ?;
 
 -- name: UserAddService :exec
@@ -132,9 +140,9 @@ WHERE user_id = ? AND service_id = ?;
 
 -- name: CreateUserWallet :exec
 INSERT INTO user_wallets (
-    `user_id`, `wallet_addr`, `sec_pk`, `is_integrated`
+    `user_id`, `wallet_addr`, `sec_pk`, `is_integrated`, `wallet_type`
 ) VALUES (
-    ?, ?, ?, ?
+    ?, ?, ?, ?, ?
 );
 
 -- name: GetUserWallets :many
@@ -143,6 +151,10 @@ WHERE user_id = ?;
 
 -- name: GetPKFromWallet :one
 SELECT sec_pk FROM user_wallets
+WHERE wallet_addr = ?;
+
+-- name: FindWallet :one
+SELECT * FROM user_wallets
 WHERE wallet_addr = ?;
 
 -- name: CheckUserWallet :one
@@ -154,4 +166,19 @@ INSERT INTO user_pw (
     user_id, sec_pw
 ) VALUES (
     ?, ?
-)
+);
+
+-- name: CheckUserPass :one
+SELECT COUNT(*) FROM user_pw
+WHERE user_id = ? AND sec_pw = ?;
+
+-- name: CheckPassExists :one
+SELECT COUNT(*) FROM user_pw
+WHERE user_id = ?;
+
+-- name: GetTransactionsAAA :many
+SELECT t.id, t.from_id, t.to_id, t.memo, t.total_amount, s.name, s.symbol, s.decimals, s.image, s.is_native, s.net_type, s.wallet_type FROM transactions AS t
+LEFT JOIN services AS s
+ON s.id = t.service_id
+WHERE `from_id` = ? OR `to_id` IN (?, ?, ?)
+LIMIT ? OFFSET ?;

@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS `services` (
   `is_native` tinyint(4) NOT NULL DEFAULT '0',
   `contract_addr` varchar(200) DEFAULT '0',
   `net_type` varchar(50) DEFAULT '0',
+  `wallet_type` varchar(50) DEFAULT 'eth',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 
@@ -81,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `transactions` (
   `memo` varchar(50) DEFAULT '0',
   `total_amount` bigint(20) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4;
 
 -- 내보낼 데이터가 선택되어 있지 않습니다.
 
@@ -92,7 +93,8 @@ CREATE TABLE IF NOT EXISTS `transaction_detail` (
   `to` varchar(100) NOT NULL,
   `amount` bigint(20) NOT NULL DEFAULT '0',
   `is_onchain` tinyint(4) NOT NULL DEFAULT '0',
-  `txhash` varchar(200) DEFAULT NULL
+  `txhash` varchar(200) DEFAULT NULL,
+  `status` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 내보낼 데이터가 선택되어 있지 않습니다.
@@ -102,11 +104,12 @@ CREATE TABLE IF NOT EXISTS `users` (
   `id` int(11) unsigned zerofill NOT NULL AUTO_INCREMENT,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `nickname` varchar(50) NOT NULL,
+  `nickname` varchar(50) DEFAULT NULL,
   `email` varchar(200) NOT NULL,
   `type` varchar(50) NOT NULL,
   `verified` tinyint(4) NOT NULL DEFAULT '0',
   `is_locked` tinyint(4) NOT NULL DEFAULT '0',
+  `picture` varchar(200) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 
@@ -120,7 +123,7 @@ CREATE TABLE IF NOT EXISTS `user_balances` (
   `amount` bigint(20) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_id` (`user_id`,`service_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4;
 
 -- 내보낼 데이터가 선택되어 있지 않습니다.
 
@@ -133,7 +136,7 @@ CREATE TABLE IF NOT EXISTS `user_pw` (
   `sec_pw` varchar(200) DEFAULT NULL,
   `wallet_addr` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 
 -- 내보낼 데이터가 선택되어 있지 않습니다.
 
@@ -157,7 +160,7 @@ CREATE TABLE IF NOT EXISTS `user_wallets` (
   `wallet_type` varchar(50) DEFAULT NULL,
   `net_type` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4;
 
 -- 내보낼 데이터가 선택되어 있지 않습니다.
 

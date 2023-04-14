@@ -61,6 +61,71 @@ func (q *Queries) GetOptBalances(ctx context.Context, userID int32, selected str
 	return items, nil
 }
 
+type GetTransactionsRow struct {
+	ID          int32
+	FromID      int32
+	ToID        int32
+	Memo        sql.NullString
+	TotalAmount int64
+	Name        sql.NullString
+	Symbol      sql.NullString
+	Decimals    sql.NullInt32
+	Image       sql.NullString
+	IsNative    sql.NullInt32
+	NetType     sql.NullString
+	WalletType  sql.NullString
+}
+
+func (q *Queries) GetTransactions(ctx context.Context, userID string, lim string, off string) ([]GetTransactionsRow, error) {
+	stmt := fmt.Sprintln(
+		"SELECT t.id, t.from_id, t.to_id, t.memo, t.total_amount, s.name, s.symbol, s.decimals, s.image, s.is_native, s.net_type, s.wallet_type " +
+			"FROM transactions AS t " +
+			"LEFT JOIN services AS s " +
+			"ON s.id = t.service_id " +
+			"WHERE from_id = '" +
+			userID +
+			"' OR to_id IN ( " +
+			"SELECT wallet_addr FROM user_wallets WHERE user_id = '" + userID + "' ) " +
+			"OR to_id = '" +
+			userID + "' " +
+			"LIMIT " + lim +
+			" OFFSET " + off,
+	)
+	rows, err := q.db.QueryContext(ctx, stmt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTransactionsRow
+	for rows.Next() {
+		var i GetTransactionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FromID,
+			&i.ToID,
+			&i.Memo,
+			&i.TotalAmount,
+			&i.Name,
+			&i.Symbol,
+			&i.Decimals,
+			&i.Image,
+			&i.IsNative,
+			&i.NetType,
+			&i.WalletType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 func (q *Queries) RawSQLExec(ctx context.Context, stmt string) error {
 	_, err := q.db.ExecContext(ctx, stmt)
 	return err

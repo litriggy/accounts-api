@@ -1,0 +1,6 @@
+-- name: GetTransactions :many
+SELECT t.from_id, t.to_id, t.memo, t.total_amount, s.name, s.symbol, s.decimals, s.image, s.is_native, s.net_type, s.wallet_type FROM transactions AS t
+LEFT JOIN services AS s
+ON s.id = t.service_id
+WHERE `from_id` = ? OR `to_id` IN (?, ?, ?)
+LIMIT ? OFFSET ?;

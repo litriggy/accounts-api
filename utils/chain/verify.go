@@ -14,7 +14,7 @@ func Verify(address string, salt string, signature string, wallet string) (bool,
 		"metamask": "\x19Ethereum Signed Message:\n",
 		"kaikas":   "\x19Klaytn Signed Message:\n",
 	}
-	hashed := []byte(walletToStr["wallet"] + strconv.Itoa(len(salt)) + salt)
+	hashed := []byte(walletToStr[wallet] + strconv.Itoa(len(salt)) + salt)
 	hash := crypto.Keccak256Hash(hashed)
 
 	decoded := hexutil.MustDecode(signature)
@@ -31,6 +31,7 @@ func Verify(address string, salt string, signature string, wallet string) (bool,
 		return false, err
 	}
 	actualAddr := crypto.PubkeyToAddress(*sigPublickKeyECDSA).String()
+
 	if strings.EqualFold(actualAddr, address) {
 		return true, nil
 	} else {

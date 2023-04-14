@@ -22,6 +22,8 @@ type GoogleUserInfo struct {
 }
 
 type AuthInfo struct {
-	ID    string
-	Email string
+	ID       string
+	Email    string
+	Picture  string
+	Nickname string
 }

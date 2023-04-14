@@ -67,7 +67,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "소셜 로그인 버전 (ex: 1, 2, ...)",
+                        "description": "소셜 로그인 버전 웹사이트: 1, 확장앱: 2",
                         "name": "version",
                         "in": "path",
                         "required": true
@@ -121,9 +121,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/tx/transfer": {
-            "post": {
-                "description": "오프체인 송금 API 입니다.",
+        "/v1/tx/history": {
+            "get": {
+                "description": "거래내역 조회 API 입니다. 상세 거래내역 조회를 통해 상세 내역을 확인할 수 있습니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -133,7 +133,89 @@ const docTemplate = `{
                 "tags": [
                     "Transaction"
                 ],
-                "summary": "오프체인 송금 API",
+                "summary": "거래내역 조회 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "액세스 토큰",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "조회 limit",
+                        "name": "lim",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "조회 offset",
+                        "name": "off",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tx/history/detail/{id}": {
+            "get": {
+                "description": "거래내역 상세 조회 API 입니다. 상세 거래내역 조회를 통해 상세 내역을 확인할 수 있습니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "거래내역 상세 조회 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "트랜잭션 ID 값",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tx/transfer": {
+            "post": {
+                "description": "온/오프체인 송금 API 입니다. 온/오프체인 기록을 전송하고 싶을 경우 body에 추가.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "온/오프체인 송금 API",
                 "parameters": [
                     {
                         "type": "string",
@@ -148,7 +230,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Transfer"
+                            "$ref": "#/definitions/model.RECVTransfer"
                         }
                     }
                 ],
@@ -165,6 +247,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/user/myinfo": {
+            "get": {
+                "description": "내 정보 조회 API 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "내 정보 조회 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "액세스 토큰",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/secondpass":{
+
+        }
         "/v1/user/balance": {
             "get": {
                 "description": "잔고 조회 API 입니다.",
@@ -177,7 +297,7 @@ const docTemplate = `{
                 "tags": [
                     "User"
                 ],
-                "summary": "잔고 조회 API",
+                "summary": "오프체인 특정 서비스들의 잔고 조회 API",
                 "parameters": [
                     {
                         "type": "string",
@@ -189,7 +309,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "조회 대상 id 쉼표로 구분합니다. ex) 1, 2, 3",
-                        "name": "items[]",
+                        "name": "services[]",
                         "in": "query",
                         "required": true
                     }
@@ -209,7 +329,7 @@ const docTemplate = `{
         },
         "/v1/user/secondpass": {
             "post": {
-                "description": "2차 비밀번호 등록 API 입니다.",
+                "description": "2차 비밀번호 (평문)을 받아 해싱 후 저장합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -295,7 +415,7 @@ const docTemplate = `{
         },
         "/v1/user/services": {
             "get": {
-                "description": "등록한 서비스 조회 API 입니다.",
+                "description": "액세스 토큰 기반하여 유저 검색 후 등록한 서비스 조회 API 입니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -468,17 +588,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.SignIn": {
-            "description": "로그인/회원가입 request Body struct",
-            "type": "object",
-            "properties": {
-                "accessToken": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.Transfer": {
-            "description": "송금 request Body struct",
+        "model.RECVTransfer": {
             "type": "object",
             "properties": {
                 "offChainEvent": {
@@ -505,8 +615,17 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "to": {
-                    "description": "example:\"송금 대상 유저 Id 값\"` + "`" + `      // example:\"수량\"` + "`" + `",
+                    "description": "example:\"송금 대상 유저 Id 값\"` + "`" + `",
                     "type": "integer"
+                }
+            }
+        },
+        "model.SignIn": {
+            "description": "로그인/회원가입 request Body struct",
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
                 }
             }
         }
@@ -520,7 +639,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api",
 	Schemes:          []string{"http"},
 	Title:            "Accounts API",
-	Description:      "계정계 API 서버 입니다.",
+	Description:      "계정계 API 서버 입니다. session 키 활용 데이터 확인, 업데이트 시 헤더 authorization 키 값으로 재발급된 세션키를 확인할 수 있습니다.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

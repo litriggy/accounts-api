@@ -20,3 +20,12 @@ type AddHardWallet struct {
 type AddSecondPass struct {
 	SecPw string `json:"secPw"`
 }
+
+//resp
+
+type UserInfo struct {
+	ID       int32  `json:"userId"`
+	Nickname string `json:"nickname"`
+	Email    string `json:"email"`
+	Picture  string `json:"picture"`
+}
